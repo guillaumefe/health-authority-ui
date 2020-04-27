@@ -3,18 +3,21 @@ from random import randint
 from time import sleep
 from uuid import uuid4
 
-from flask import Flask, json, make_response, session, redirect, request, url_for
+from flask import Flask, json, make_response, session, redirect, request, url_for, render_template
+import requests
+
+FRONT_URL = "http://localhost:8080"
+AUTHENTICATION_LAYER_URL = "https://authentication.layer:8080"
 
 app = Flask(__name__)
 
+# from flask_cors import CORS
+# cors = CORS(app, resources={r"/login/*": {"origins": "*"}})
+
 app.secret_key = b"very awesomely super secret key that no one knows"
-
-FRONT_URL = "http://localhost:8080"
-
 
 @app.after_request
 def after_request(response):
-    # Fake network delay.
     sleep(0.5)
     # Add CORS.
     header = response.headers
@@ -39,14 +42,18 @@ def user_info():
 @app.route("/login/", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
-        session["username"] = "Dr. Nemo"
-        return redirect(FRONT_URL)
-    return """
-        <form method="post">
-            <input type="submit" value="login">
-        </form>
-    """
 
+        # request the authentication layer
+        data = {'username':request.form.get('login'),'password':request.form.get('password')}
+        r = requests.post(AUTHENTICATION_LAYER_URL, data=data)
+        print(r.text)
+
+    return render_template('login.html', username=username, password=password)
+    # return """
+    #     <form method="post">
+    #         <input type="submit" value="login">
+    #     </form>
+    # """
 
 @app.route("/logout/")
 def logout():
